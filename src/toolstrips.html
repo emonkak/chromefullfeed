@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script type="text/javascript">
+window.onload = function(){
+  chrome.self.onConnect.addListener(function(port){
+    port.onMessage.addListener(function(item, con){
+      var type = item.type;
+      console.info(type);
+      if(type === 'FullFeed'){
+        fullfeed_check_siteinfo(con, item);
+//      } else if(type === 'AutoPager'){
+//        con.postMessage(autopager_check_siteinfo(item));
+      } else if(type === 'Pattern'){
+        con.postMessage(get_pattern(item));
+      } else if(type === 'SendSiteinfo'){
+        con.postMessage(set_siteinfo(item));
+      } else if(type === 'Update'){
+        update(con, item);
+      } else if(type === 'Check'){
+        con.postMessage(exist_siteinfo(item));
+      }
+    });
+  });
+  document.body.addEventListener('click', function(ev){
+    update();
+  }, false);
+};
+
+var VERSION = '0.0.1';
+var SITEINFO_IMPORT_URLS = [
+{
+  name:'Wedata',
+  format:'JSON',
+  type:'LDRFullFeed',
+  url: 'http://wedata.net/databases/LDRFullFeed/items.json',
+  alternative: 'http://utatane.appjet.net/databases/LDRFullFeed/items.json'
+},
+/*
+{
+  name:'Microformats URL List',
+  format:'HTML',
+  type:'LDRFullFeed',
+  url: 'http://constellation.jottit.com/microformats_url_list'
+},
+*/
+/*
+{
+  name:'Wedata AutoPagerize',
+  format:'JSON',
+  type:'AutoPagerize',
+  url: 'http://wedata.net/databases/AutoPagerize/items.json',
+  alternative: 'http://utatane.appjet.net/databases/AutoPagerize/items.json'
+},
+*/
+];
+
+var AUTOPAGERIZE_MICROFORMAT = {
+  name:         'autopagerize_microformat',
+  url:          '.*',
+  reg:          /.+/,
+  nextLink:     '//a[@rel="next"] | //link[@rel="next"]',
+  insertBefore: '//*[contains(@class, "autopagerize_insert_before")]',
+  pageElement:  '//*[contains(@class, "autopagerize_page_element")]',
+}
+
+var PHASE = [
+  {type:'SBM'                            },
+  {type:'INDIVIDUAL',         sub:'IND'  },
+  {type:'INDIV_MICROFORMATS'             },
+  {type:'SUBGENERAL',         sub:'SUB'  },
+  {type:'GENERAL',            sub:'GEN'  },
+  {type:'MICROFORMATS',       sub:'MIC'  }
+];
+
+var SITEINFO = null;
+var TEXT = null;
+var PATTERN = null;
+
+var fullfeed_check_siteinfo = function(con, item){
+  var item_url = item.itemURL;
+  var feed_url = item.feedURL;
+  var info = null
+  for(var i = 0, len = PHASE.length; i < len; ++i){
+    var phase = PHASE[i];
+    var fullfeed_list = SITEINFO.ldrfullfeed[phase.type];
+    for(var k = 0, list_len = fullfeed_list.length; k < list_len; ++k){
+      var data = fullfeed_list[k];
+      if(data.reg.test(item_url) || data.reg.test(feed_url)){
+        info = data;
+        break;
+      }
+    }
+  }
+  if(info){
+    item.hide = true;
+    con.postMessage(item);
+    item.info = info;
+    var opt = {
+      method: 'get',
+      url: item_url,
+      overrideMimeType: 'text/html; charset=' + (info.enc || 'UTF-8'),
+      headers: {
+        'User-Agent': navigator.userAgent + ' GoogleChrome (LDR Full Feed ' + VERSION + ')',
+      },
+      onerror: function(){
+        item.message = 'This entry is not listed on SITEINFO';
+        item.hide = false;
+        item.ok = false;
+        con.postMessage(item);
+      },
+      onload: function(res){
+        item.hide = false;
+        item.ok = true;
+        res.finalUrl = res.itemURL;
+        item.responseText = res.responseText;
+        con.postMessage(item);
+      },
+      ontimeout: function(){
+        item.hide = false;
+        item.ok = false;
+        item.message = 'TIMEOUT';
+        con.postMessage(item);
+      }
+    };
+    ChromeXHR(opt);
+  } else {
+    item.ok = false;
+    con.postMessage(item);
+  }
+}
+
+var autopager_check_siteinfo = function(item){
+}
+
+var set_siteinfo = function(item){
+  item.ok = true;
+  try {
+    data = eval('('+item.siteinfo+')');//JSON.parse(item.siteinfo);
+    TEXT = item.siteinfo;
+    PHASE.forEach(function(i){
+      var fullfeed_list = data.ldrfullfeed[i.type];
+      fullfeed_list.forEach(function(info){
+        info.reg = new RegExp(info.url);
+      });
+    });
+    PATTERN = create_pattern(data);
+    SITEINFO = data;
+  } catch(e) {
+    item.ok = false;
+  }
+  return item;
+}
+
+var exist_siteinfo = function(item){
+  if(SITEINFO){
+    item.ok = true;
+    item.date = SITEINFO.date;
+    item.siteinfo = TEXT;
+  } else {
+    item.ok = false;
+  }
+  item.type = 'PleaseSend';
+  return item;
+}
+
+var get_pattern = function(item){
+  item.ok = false;
+  if(PATTERN){
+    item.ok = true;
+    item.pattern = PATTERN;
+  }
+  return item;
+}
+
+var create_pattern = function(data){
+  var exps = [];
+  if(data && data.ldrfullfeed){
+    for(var i in data.ldrfullfeed){
+      data.ldrfullfeed[i].forEach(function(info){
+        exps.push(info.url);
+      });
+    }
+  }
+  var expression = exps.join('|');
+  return expression;
+}
+var update = (function(){
+  var updating = false;
+  return function(con, item){
+    if(updating){
+      if(con && item){
+        item.ok = false;
+        item.message = 'Now loading. Please wait!';
+        con.postMessage(item);
+      }
+    } else {
+      updating = true;
+      new Cache(function(data){
+        TEXT = JSON.stringify(data);
+        var pattern = create_pattern(data);
+        PHASE.forEach(function(i){
+          var fullfeed_list = data.ldrfullfeed[i.type];
+          fullfeed_list.forEach(function(info){
+            info.reg = new RegExp(info.url);
+          });
+        });
+        SITEINFO = data;
+        PATTERN = pattern;
+        updating = false;
+        if(con && item){
+          item.siteinfo = TEXT;
+          item.date = SITEINFO.date;
+          item.ok = true;
+          con.postMessage(item);
+        }
+      },
+      function(){
+        updating = false;
+        if(con && item){
+          item.ok = false;
+          con.postMessage(item);
+        }
+      });
+    }
+  }
+})();
+
+var reset_siteinfo = function(){
+  if(reset_siteinfo.state == 'loading') return console.info('Now loading. Please wait!');
+  var cacheAgent = new Cache();
+}
+
+// [Cache]
+
+var Cache = function(callback, error){
+  var self = this;
+  this.callback = callback;
+  this.error = error;
+  this.ldrfullfeed  = {};
+  this.autopagerize = [AUTOPAGERIZE_MICROFORMAT];
+  this.success = 0;
+  this.error_flag = false;
+  this.length = SITEINFO_IMPORT_URLS.length;
+  this.error_flag || console.info('Resetting cache. Please wait...');
+
+  PHASE.forEach(function(i){
+      this.ldrfullfeed[i.type] = [];
+  }, this);
+  SITEINFO_IMPORT_URLS.forEach(function(obj, index) {
+    new Agent(obj, this, index);
+  }, this);
+}
+
+Cache.prototype.finalize = function(){
+  PHASE.forEach(function(p){
+    this.ldrfullfeed[p.type].sort(function(a,b){
+      return a.urlIndex - b.urlIndex;
+    });
+  }, this);
+  var data = {
+    VERSION      : VERSION,
+    ldrfullfeed  : this.ldrfullfeed,
+    autopagerize : this.autopagerize,
+    date         : (new Date).getTime()
+  };
+  this.error_flag || console.info('Resetting cache. Please wait... Done');
+  reset_siteinfo.state = 'normal';
+
+  this.callback(data);
+};
+
+Cache.prototype.error = function(e){
+  this.error_flag || console.info('Cache Error: '+e);
+  this.error_flag = true;
+  reset_siteinfo.state = 'normal';
+  this.error();
+};
+
+var Agent = function(opt, Cache, index){
+  for(var i in opt) opt.hasOwnProperty(i) && (this[i] = opt[i]);
+  ['format', 'type'].forEach(function(prop){
+    this[prop] = this[prop].toUpperCase();
+  }, this);
+  this.Cache = Cache;
+  this._flag = false;
+  this.index = index;
+  Agent.request(this);
+}
+
+Agent.prototype = {
+  method: 'GET',
+  headers: {
+    'User-Agent': navigator.userAgent + ' Greasemonkey (LDR Full Feed ' + VERSION + ')'
+  },
+  onload: function(res){
+    this['onload_'+this.type](res);
+  },
+  onerror: function(code){
+    if(!this._flag && this.alternative){
+      this.Cache.error_flag || console.info(code+' Regain SITEINFO from alternative url');
+      this._flag = true;
+      this.url = this.alternative;
+      Agent.request(this);
+    } else {
+      return this.Cache.error(code || 'Cache Request Error '+this.name);
+    }
+  },
+  onload_AUTOPAGERIZE: function(res){
+    var info = Agent[this.format].AUTOPAGERIZE(res.responseText, this.index);
+    if(!info) return this.onerror(this.format+' Parse Error: '+this.name);
+    var ap_list = this.Cache.autopagerize;
+    info.forEach(function(i){
+      ap_list.push(i);
+    });
+    if(++this.Cache.success == this.Cache.length) this.Cache.finalize();
+  },
+  onload_LDRFULLFEED: function(res){
+    var info = Agent[this.format].LDRFULLFEED(res.responseText, this.index);
+    if(!info) return this.onerror(this.format+' Parse Error: '+this.name);
+    PHASE.forEach(function(i){
+      var fullfeed_list = this.Cache.ldrfullfeed[i.type];
+      info.filter(function(d){
+        var type = d.type.toUpperCase();
+        return (type == i.type || (i.sub && type == i.sub));
+      })
+      .forEach(function(d){
+        fullfeed_list.push(d);
+      });
+    }, this);
+    if(++this.Cache.success == this.Cache.length) this.Cache.finalize();
+  },
+  ontimeout: function(){
+    this.onerror('Cache Error: TIMEOUT');
+  }
+};
+
+Agent.JSON = {
+  LDRFULLFEED: function(data, index){
+    try {
+      var memo = [];
+      eval('('+data+')')
+      .forEach(function(i){
+        var d = i.data;
+        d.name = i.name;
+        d.microformats = (d.microformats == 'true');
+        d.urlIndex = index;
+        if(!(['url', 'xpath', 'type'].some(function(prop){
+          if(!d[prop] && (prop != 'xpath' || !d.microformats)) return true;
+          try{
+            var reg = new RegExp(d.url);
+          } catch(e) {
+            return true;
+          }
+          return false;
+        }))){
+          memo.push(d);
+        }
+      });
+      return memo;
+    } catch(e) {
+      return null;
+    }
+  },
+  AUTOPAGERIZE: function(data, index){
+    var info = [];
+    var ap_list = this.autopagerize;
+    try {
+      var memo = [];
+      eval('('+data+')')
+      .forEach(function(i){
+        var d = i.data;
+        d.name = i.name;
+        try{
+          var reg = new RegExp(d.url);
+          memo.push(d);
+        } catch(e) {
+        }
+      });
+      return memo;
+    } catch(e) {
+      return null;
+    }
+  }
+};
+
+Agent.HTML = {
+  LDRFULLFEED: function(data, index){
+    var info = [];
+    try {
+      var doc = parseHTML(data);
+    } catch(e) {
+      return null;
+    }
+    $X('//textarea[contains(concat(" ",normalize-space(@class)," "), " ldrfullfeed_data ")]', doc)
+    .forEach(function(siteinfo_list){
+      var data = Agent.parseSiteinfo(siteinfo_list.value, index);
+      if(data) info.push(data);
+    });
+
+    ['utf-8','euc-jp','shift_jis'].forEach(function(charset){
+      $X('//ul[contains(concat(" ",normalize-space(@class)," "), " microformats_list ' + charset + ' ")]/li', doc)
+      .forEach(function(microformats_data){
+        var data = Agent.parseMicroformats(charset, microformats_data, index);
+        if(data) info.push(data);
+      });
+    });
+    return info;
+  }
+};
+
+Agent.parseMicroformats = function(c, li, index){
+  if(!li) return;
+  var info = {
+    name : "MicroformatsURLList:"+li.textContent,
+    url : li.textContent,
+    urlIndex : index,
+    enc : c,
+    microformats : true,
+    type : 'INDIV_MICROFORMATS'
+  }
+  try {
+    var reg = new RegExp(info.url);
+    return info;
+  } catch(e) {
+    return null;
+  }
+};
+
+Agent.parseSiteinfo = function(text, index){
+  var lines = text.split(/[\r\n]+/);
+  var reg = /(^[^:]*?):(.*)$/;
+  var trim = Agent.trim;
+  var info = {};
+  var result = null;
+  lines.forEach(function(line) {
+    if(result = line.match(reg)){
+      info[result[1]] = trim(result[2]);
+    }
+  });
+  info.microformats = (info.microformats && info.microformats == 'true');
+  if(['url', 'xpath', 'type'].some(function(prop){
+    if(!info[prop] && (prop != 'xpath' || !info.microformats)) return true;
+    try{
+      var reg = new RegExp(info.url);
+    } catch(e) {
+      return true;
+    }
+    return false;
+  })){
+    return null;
+  } else {
+    return info;
+  }
+};
+
+Agent.trim = function(str){
+  return str.replace(/^\s*/, '').replace(/\s*$/, '');
+};
+
+
+Agent.request = function(opt){
+  window.setTimeout(ChromeXHR, 0, opt);
+};
+
+var ChromeXHR = (function(){
+  var XHR_TIMEOUT = 30 * 1000;
+  return function(opt){
+    var req = new XMLHttpRequest(),
+        params = [],
+        not_timeout = true;
+    opt        || (opt = {});
+    opt.method || (opt.method = 'GET');
+    opt.data   || (opt.data = {});
+
+    for(var key in opt.data){
+      if(opt.data.hasOwnProperty(key))
+        params.push(encodeURIComponent(key)+'='+encodeURIComponent(opt.data[key]));
+    }
+    params = params.join('&');
+
+    req.onreadystatechange = function(e){
+      if(req.readyState === 4){
+        if (req.status >= 200 && req.status < 300)
+          if(not_timeout){
+            not_timeout = false;
+            opt.onload && opt.onload(req);
+          }
+        else
+          if(not_timeout){
+            not_timeout = false;
+            opt.onerror && opt.onerror(req);
+          }
+      }
+    }
+    req.open(opt.method, opt.url, true);
+    if(opt.overrideMimeType && req.overrideMimeType)
+      req.overrideMimeType(opt.overrideMimeType);
+    if(opt.header){
+      for(var key in opt.header){
+        if(opt.header.hasOwnProperty(key))
+          req.setRequestHeader(key, opt.header[key]);
+      }
+    }
+    if(opt.method.toUpperCase()==='POST')
+      req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    req.send(params);
+    var id = setTimeout(function(){
+      clearTimeout(id);
+      if(not_timeout){
+        not_timeout = false;
+        opt.ontimeout && opt.ontimeout(req);
+      }
+    }, XHR_TIMEOUT);
+    return req;
+  }
+})();
+</script>
+<style>
+button {
+  display: inline-block;
+  text-align: center;
+  padding: 1px;
+  margin: 1px;
+  color  : #FFFFFF;
+  background-color: #C6DAB2;
+  border : 1px solid #9FAC8F;
+  -webkit-transition: background-color 0.2s cubic-bezier(0.4, 0.0, 0.6, 0.4);
+}
+button:hover {
+  background-color: #9FAC8F;
+}
+button:active {
+  border:1px solid #004F12;
+  background-color: #9FAC8F;
+}
+</style>
+<body>
+<button title="update SITEINFO">CFF</button>
+</body>
+</html>

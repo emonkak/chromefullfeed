@@ -1,0 +1,18 @@
+.chrome_fullfeed_loading,
+.chrome_fullfeed_loading a{
+  color: green !important;
+}
+.chrome_fullfeed_loading .item_body a{
+  color: palegreen !important;
+}
+.chrome_fullfeed_loading{
+  background-color: Honeydew !important;
+}
+.chrome_fullfeed_icon{
+  cursor: pointer !important;
+}
+.chrome_fullfeed_h2{
+  display: block !important;
+  font-weight: bold !important;
+  font-size: 130% !important;
+}
