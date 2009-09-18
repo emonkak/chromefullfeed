@@ -1,6 +1,8 @@
 # -*- ruby -*-
 require 'rubygems'
 require 'crxmake'
+require 'fileutils'
+include FileUtils::Verbose
 $manifest = "src/manifest.json"
 
 module Utils
@@ -76,7 +78,9 @@ end
 # package task
 desc "package"
 task :package do
-  rm "package/chromefullfeed.crx"
+  mkdir_p "package" unless File.exist?("package")
+  package = "package/chromefullfeed.crx"
+  rm package if File.exist?(package)
   CrxMake.make(
     :ex_dir => "src",
     :pkey   => "~/dev/private/chromefullfeed.pem",
