@@ -19,9 +19,9 @@ var loadCurrentEntry = function(id){
     var text = Object.toJSON({
       id : item.id,
     });
-    var ev = document.createEvent('MutationEvent');
-    ev.initMutationEvent('LDRFullFeed.autopager', true, true, container, null, text, null, null);
-    document.dispatchEvent(ev);
+    var ev = document.createEvent('MessageEvent');
+    ev.initMessageEvent('LDRFullFeed.autopager', true, false, text, location.protocol+"//"+location.host, "", null);
+    container.dispatchEvent(ev);
     return null;
   }
   if(hasClass(container, 'chrome_fullfeed_loading')){
@@ -34,9 +34,9 @@ var loadCurrentEntry = function(id){
     title   : item.title,
     id      : item.id
   });
-  var ev = document.createEvent('MutationEvent');
-  ev.initMutationEvent('LDRFullFeed.load', true, true, container, null, text, null, null);
-  document.dispatchEvent(ev);
+  var ev = document.createEvent('MessageEvent');
+  ev.initMessageEvent('LDRFullFeed.load', true, false, text, location.protocol+"//"+location.host, "", window);
+  container.dispatchEvent(ev);
 }
 LDRFullFeed.loadCurrentEntry = loadCurrentEntry;
 var loadAllEntries = function(){

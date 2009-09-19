@@ -38,7 +38,7 @@
   }, false);
 
   window.addEventListener('LDRFullFeed.load', function(ev){
-    fullfeed(JSON.parse(ev.newValue), ev.relatedNode);
+    fullfeed(JSON.parse(ev.data), ev.target);
   }, false);
   window.addEventListener('LDRFullFeed.reset', function(){
     connection.postMessage({
@@ -46,7 +46,7 @@
     });
   }, false);
   window.addEventListener('LDRFullFeed.autopager', function(ev){
-    autopager(JSON.parse(ev.newValue), ev.relatedNode);
+    autopager(JSON.parse(ev.data), ev.target);
   }, false);
 
   connection.onMessage.addListener(function(res){
