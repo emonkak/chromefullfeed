@@ -344,7 +344,7 @@
     if (!cn) return false;
     var cnlist = cn.toLowerCase().split(/\s+/);
     for (var i=0,l=cnlist.length;i<l;i++)
-      if(cnlist[i] == name.toLowerCase()) return true;
+      if(cnlist[i] == name) return true;
     return false;
   }
   var addClass = function(e, name){
