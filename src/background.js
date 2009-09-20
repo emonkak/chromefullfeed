@@ -18,7 +18,7 @@ window.addEventListener('load', function(){
   });
 }, false);
 
-var VERSION = '1.0.1';
+var VERSION = '1.0.2';
 var SITEINFO_IMPORT_URLS = [
 {
   name:'Wedata',
@@ -530,7 +530,7 @@ var parseSiteinfo = function(text, index){
 };
 
 // initialize
-if(!localStorage.text){
+if(!!localStorage.text){
   set(localStorage.text);
 } else {
   update();

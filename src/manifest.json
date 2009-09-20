@@ -11,5 +11,5 @@
    "name": "ChromeFullFeed",
    "permissions": [ "http://*/*" ],
    "update_url": "http://chromefullfeed.googlecode.com/files/updates.xml",
-   "version": "1.0.1"
+   "version": "1.0.2"
 }
