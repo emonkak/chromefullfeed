@@ -2,8 +2,11 @@
 require 'rubygems'
 require 'crxmake'
 require 'fileutils'
+require 'json'
 include FileUtils::Verbose
 $manifest = "src/manifest.json"
+$manifest_data = File.open($manifest, 'rb'){|f| JSON.parse(f.read) }
+$version = $manifest_data["version"]
 
 module Utils
   class Version < Object
@@ -84,7 +87,7 @@ task :package do
   CrxMake.make(
     :ex_dir => "src",
     :pkey   => "~/dev/private/chromefullfeed.pem",
-    :crx_output => "package/chromefullfeed.crx",
+    :crx_output => "package/chromefullfeed-#{$version}.crx",
     :verbose => true,
     :ignorefile => /\.swp/,
     :ignoredir => /\.(?:svn|git|cvs)/
