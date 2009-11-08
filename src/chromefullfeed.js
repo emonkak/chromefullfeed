@@ -28,14 +28,12 @@
   window.FullFeed.documentFilter = documentFilters;
 
   // register
-  window.addEventListener('load', function(){
-    // future => executeScript
-    var script = document.createElement('script');
-    script.type = "text/javascript";
-    script.charset = "utf-8";
-    script.src = chrome.extension.getURL('ldr_page_script.js');
-    document.body.appendChild(script);
-  }, false);
+  // future => executeScript
+  var script = document.createElement('script');
+  script.type = "text/javascript";
+  script.charset = "utf-8";
+  script.src = chrome.extension.getURL('ldr_page_script.js');
+  document.head.appendChild(script);
 
   window.addEventListener('LDRFullFeed.load', function(ev){
     fullfeed(JSON.parse(ev.data), ev.target);
