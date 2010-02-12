@@ -12,7 +12,7 @@ window.addEventListener('load', function(){
       } else if(type === 'pattern'){
         regset(con, item);
       } else if(type === 'update'){
-        update(con, item);
+        updateSiteinfo(con, item);
       }
     });
   });
@@ -267,7 +267,7 @@ var createPattern = function(data){
   return expression;
 }
 
-var update = (function(){
+var updateSiteinfo = (function(){
   var updating = false;
   return function(con){
     if(updating){
@@ -533,15 +533,97 @@ var parseSiteinfo = function(text, index){
 if(!!localStorage.text){
   set(localStorage.text);
 } else {
-  update();
+  updateSiteinfo();
 }
 
 var trim = function(str){
   return str.replace(/^\s*/, '').replace(/\s*$/, '');
 }
 
-chrome.extension.onRequestExternal.addListener(function(req, sender, func){
+var requestsTable = {
+  'fullfeed': function(req, sender, func){
+    if(req.url){
+      var info;
+      for(var i = 0, len = PHASE.length; i < len; ++i){
+        var phase = PHASE[i];
+        var fullfeed_list = SITEINFO.ldrfullfeed[phase.type];
+        for(var k = 0, list_len = fullfeed_list.length; k < list_len; ++k){
+          var data = fullfeed_list[k];
+          var reg = new RegExp(data.url);
+          if(reg.test(req.url)){
+            info = data;
+            break;
+          }
+        }
+      }
+      if(info){
+        var opt = {
+          method: 'get',
+          url: req.url,
+          overrideMimeType: 'text/html; charset=' + (info.enc || 'UTF-8'),
+          headers: {
+            'User-Agent': navigator.userAgent + ' GoogleChrome (LDR Full Feed ' + VERSION + ')'
+          },
+          onerror: function(){
+            func({
+              success: false,
+              response: 'XHR Request failed'
+            });
+          },
+          onload: function(res){
+            func({
+              success: true,
+              response: update({
+                info: info
+              }, res)
+            });
+          },
+          ontimeout: function(){
+            func({
+              success: false,
+              response: 'XHR Request timeout'
+            });
+          }
+        };
+        ChromeXHR(opt);
+        return true;
+      } else {
+        func({
+          success: false,
+          response: 'This url is not listed on SITEINFO'
+        });
+        return true;
+      }
+    } else {
+      return false;
+    }
+  },
+  'update': function(req, sender, func){
+    updateSiteinfo();
+    func({
+      success: true
+    });
+    return true;
+  }
+};
 
+chrome.extension.onRequestExternal.addListener(function(req, sender, func){
+  if(!(req.action &&
+       req.action in requestsTable &&
+       requestsTable[req.action](req, sender, func))){
+    func({
+      success: false,
+      response: 'invalid request'
+    });
+  }
 });
 
+function update(t, s){
+  if(s){
+    Object.keys(s).forEach(function(key){
+      t[key] = s[key];
+    });
+  }
+  return t;
+}
 
