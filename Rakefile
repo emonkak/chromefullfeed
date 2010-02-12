@@ -9,11 +9,11 @@ $manifest_data = File.open($manifest, 'rb'){|f| JSON.parse(f.read) }
 $version = $manifest_data["version"]
 
 # package task
-namespace :package do
+namespace :pkg do
   desc "crx"
   task :crx do
-    mkdir_p "package" unless File.exist?("package")
-    package = "package/#{$name}.crx"
+    mkdir_p "pkg" unless File.exist?("pkg")
+    package = "pkg/#{$name}.crx"
     rm package if File.exist?(package)
     CrxMake.make(
       :ex_dir => "src",
@@ -27,8 +27,8 @@ namespace :package do
 
   desc "zip"
   task :zip do
-    mkdir_p "package" unless File.exist?("package")
-    package = "package/#{$name}.zip"
+    mkdir_p "pkg" unless File.exist?("pkg")
+    package = "pkg/#{$name}.zip"
     rm package if File.exist?(package)
     CrxMake.zip(
       :ex_dir => "src",
@@ -39,7 +39,7 @@ namespace :package do
       :ignoredir => /(?:^\.(?:svn|git)$|^CVS$)/
     )
   end
-  directory "package"
+  directory "pkg"
 end
 
 # vim: syntax=ruby fileencoding=utf-8
