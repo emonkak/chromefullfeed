@@ -18,7 +18,7 @@ window.addEventListener('load', function(){
   });
 }, false);
 
-var VERSION = '1.0.4';
+var VERSION = '1.1.0';
 var SITEINFO_IMPORT_URLS = [
 {
   name:'Wedata',
