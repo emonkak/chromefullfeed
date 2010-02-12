@@ -2,7 +2,7 @@
    "background_page": "background.html",
    "content_scripts": [ {
       "css": [ "chromefullfeed.css" ],
-      "js": [ "chromefullfeed.js" ],
+      "js": [ "content.js" ],
       "matches": [ "http://reader.livedoor.com/reader/*", "http://fastladder.com/reader/*" ]
    } ],
    "description": "loading full feed entry on LDR and Fastladder",
@@ -16,5 +16,5 @@
    "name": "ChromeFullFeed",
    "permissions": [ "http://*/*" ],
    "update_url": "http://clients2.google.com/service/update2/crx",
-   "version": "1.0.7"
+   "version": "1.1.0"
 }
