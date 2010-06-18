@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Author</key>
+	<string>Constellation</string>
+	<key>CFBundleDisplayName</key>
+	<string>SafariFullFeed</string>
+	<key>CFBundleIdentifier</key>
+	<string>utatane.fullfeed</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+	<key>Chrome</key>
+	<dict>
+		<key>Global Page</key>
+		<string>background.html</string>
+	</dict>
+	<key>Content</key>
+	<dict>
+		<key>Scripts</key>
+		<dict>
+			<key>End</key>
+			<array>
+				<string>content.js</string>
+			</array>
+		</dict>
+		<key>Stylesheets</key>
+		<array>
+			<string>safarifullfeed.css</string>
+		</array>
+		<key>Whitelist</key>
+		<array>
+			<string>http://reader.livedoor.com/reader/*</string>
+			<string>http://fastladder.com/reader/*</string>
+		</array>
+	</dict>
+	<key>Description</key>
+	<string>loading full entry on LDR and Fastladder</string>
+	<key>ExtensionInfoDictionaryVersion</key>
+	<string>1.0</string>
+	<key>Permissions</key>
+	<dict>
+		<key>Website Access</key>
+		<dict>
+			<key>Include Secure Pages</key>
+			<true/>
+			<key>Level</key>
+			<string>All</string>
+		</dict>
+	</dict>
+	<key>Update Manifest URL</key>
+	<string>http://chromefullfeed.googlecode.com/files/updates.plist</string>
+	<key>Website</key>
+	<string>http://d.hatena.ne.jp/Constellation/</string>
+</dict>
+</plist>
