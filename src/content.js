@@ -509,7 +509,6 @@
       });
     });
     filters.push(function(nodes, url){
-      var removeClass = removeClass;
       nodes.forEach(function(e){
         $X('descendant-or-self::*[contains(concat(" ",@class," ")," more ")]', e)
         .forEach(function(i){
