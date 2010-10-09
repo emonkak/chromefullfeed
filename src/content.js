@@ -365,13 +365,12 @@
            documentElement.namespaceURI || '';
     }
 
-    var result = _document.evaluate(exp, context, resolver, XPathResult.ANY_TYPE, null);
+    var result = _document.evaluate(exp, context, resolver, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
       switch (result.resultType) {
         case XPathResult.STRING_TYPE : return result.stringValue;
         case XPathResult.NUMBER_TYPE : return result.numberValue;
         case XPathResult.BOOLEAN_TYPE: return result.booleanValue;
-        case XPathResult.UNORDERED_NODE_ITERATOR_TYPE:
-          // not ensure the order.
+        case XPathResult.ORDERED_NODE_ITERATOR_TYPE:
           var ret = [], i = null;
           while (i = result.iterateNext()) ret.push(i);
           return ret;
