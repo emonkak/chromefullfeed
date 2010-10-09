@@ -125,6 +125,8 @@ var fullfeed = function(con, item){
         break;
       }
     }
+    if(!!info)
+      break;
   }
   if(!!info){
     var aulist = SITEINFO.autopagerize.filter(function(i){
