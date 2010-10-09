@@ -138,7 +138,7 @@
       if(entry.length){
         filters.forEach(function(f) { f(entry, item.link) });
         // remove entry
-        var df = $CF('<hr/><p class="gm_fullfeed_pager">page <a class="gm_fullfeed_link" href="'+this.requestURL+'">'+(++page)+'</a></p>');
+        var df = $CF('<hr/><p class="gm_fullfeed_pager">page <a class="gm_fullfeed_link" href="'+item.link+'">'+(++page)+'</a></p>');
         var i = 0;
         var len = entry.length;
         var timer = setTimeout(function callback() {
