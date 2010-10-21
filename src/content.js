@@ -23,6 +23,14 @@
         xpath: '//*[contains(concat(" ",normalize-space(@class)," "), " autopagerize_page_element ")]',
     },
   ]
+  function urlX(url) {
+    if (/^(?:https?:\/\/|\.|\/)/.test(url)) {
+      return url;
+    }
+  }
+  function idX(id) {
+    return id;
+  }
   window.FullFeed = {};
   window.FullFeed.filters = filters;
   window.FullFeed.documentFilter = documentFilters;
@@ -121,7 +129,7 @@
       var item_body = $X('id("item_body_' + id + '")/div[@class="body"]', document)[0];
       var text = res.responseText;
       try {
-        text = text.replace(/(<[^>]+?[\s"'])on(?:(?:un)?load|(?:dbl)?click|mouse(?:down|up|over|move|out)|key(?:press|down|up)|focus|blur|submit|reset|select|change)\s*=\s*(?:"(?:\\"|[^"])*"?|'(\\'|[^'])*'?|[^\s>]+(?=[\s>]|<\w))(?=[^>]*?>|<\w|\s*$)/gi, "$1").replace(/<iframe(?:\s[^>]+?)?>[\S\s]*?<\/iframe\s*>/gi, "");
+        text = html_sanitize(text, urlX, idX);
         var htmldoc = parse(text, item.link);
       } catch(e) {
         return error('HTML Parse Error');
