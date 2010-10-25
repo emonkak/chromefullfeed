@@ -8,29 +8,21 @@
   var MICROFORMATS = [
     {
         name : 'hAtom-Content',
-        xpath: '//*[contains(concat(" ",normalize-space(@class)," "), " hentry ")]//*[contains(concat(" ",normalize-space(@class)," "), " entry-content ")]',
+        xpath: '//*[contains(concat(" ",normalize-space(@class)," "), " hentry ")]//*[contains(concat(" ",normalize-space(@class)," "), " entry-content ")]'
     },
     {
         name : 'hAtom',
-        xpath: '//*[contains(concat(" ",normalize-space(@class)," "), " hentry ")]',
+        xpath: '//*[contains(concat(" ",normalize-space(@class)," "), " hentry ")]'
     },
     {
         name : 'xFolk',
-        xpath: '//*[contains(concat(" ",@class," "), " xfolkentry ")]//*[contains(concat(" ",normalize-space(@class)," "), " description ")]',
+        xpath: '//*[contains(concat(" ",@class," "), " xfolkentry ")]//*[contains(concat(" ",normalize-space(@class)," "), " description ")]'
     },
     {
         name : 'AutoPagerize(Microformats)',
-        xpath: '//*[contains(concat(" ",normalize-space(@class)," "), " autopagerize_page_element ")]',
+        xpath: '//*[contains(concat(" ",normalize-space(@class)," "), " autopagerize_page_element ")]'
     },
   ]
-  function urlX(url) {
-    if (/^(?:https?:\/\/|\.|\/)/.test(url)) {
-      return url;
-    }
-  }
-  function idX(id) {
-    return id;
-  }
   window.FullFeed = {};
   window.FullFeed.filters = filters;
   window.FullFeed.documentFilter = documentFilters;
@@ -129,7 +121,6 @@
       var item_body = $X('id("item_body_' + id + '")/div[@class="body"]', document)[0];
       var text = res.responseText;
       try {
-        text = html_sanitize(text, urlX, idX);
         var htmldoc = parse(text, item.link);
       } catch(e) {
         return error('HTML Parse Error');
@@ -148,29 +139,36 @@
         filters.forEach(function(f) { f(entry, item.link) });
         // remove entry
         var df = $CF('<hr/><p class="gm_fullfeed_pager">page <a class="gm_fullfeed_link" href="'+this.requestURL+'">'+(++page)+'</a></p>');
-        entry.forEach(function(i){
-          df.appendChild(document.adoptNode(i, true));
-        });
-        item_body.appendChild(df);
-        message('Loading AutoPager ...Done');
-        addClass(container, 'chrome_fullfeed_loaded');
-        removeClass(container, 'chrome_fullfeed_loading');
-        addClass(container, item.link);
+        var i = 0;
+        var len = entry.length;
+        var id = setTimeout(function callback() {
+          clearTimeout(id);
+          df.appendChild($CF(sanitize(entry[i++])));
+          if (i < len) {
+            id = setTimeout(callback, 0);
+          } else {
+            item_body.appendChild(df);
+            message('Loading AutoPager ...Done');
+            addClass(container, 'chrome_fullfeed_loaded');
+            removeClass(container, 'chrome_fullfeed_loading');
+            addClass(container, item.link);
 
-        // next autopager
-        if(nextLink.length){
-          nextLink = nextLink[0];
-          nextLink = nextLink.getAttribute('href') ||
-                    nextLink.getAttribute('action') ||
-                    nextLink.getAttribute('value');
-          AP["autopager"+id] = {
-            ap   : ap,
-            ff   : ff,
-            link : nextLink,
-            enc  : ff.enc,
-            page : page
+            // next autopager
+            if(nextLink.length){
+              nextLink = nextLink[0];
+              nextLink = nextLink.getAttribute('href') ||
+                        nextLink.getAttribute('action') ||
+                        nextLink.getAttribute('value');
+              AP["autopager"+id] = {
+                ap   : ap,
+                ff   : ff,
+                link : nextLink,
+                enc  : ff.enc,
+                page : page
+              }
+            }
           }
-        }
+        }, 0);
       } else {
         return error('This SITE_INFO is unmatched to this entry');
       }
@@ -221,7 +219,6 @@
           var text = res.responseText;
           try {
             // XSS
-            text = text.replace(/(<[^>]+?[\s"'])on(?:(?:un)?load|(?:dbl)?click|mouse(?:down|up|over|move|out)|key(?:press|down|up)|focus|blur|submit|reset|select|change)\s*=\s*(?:"(?:\\"|[^"])*"?|'(\\'|[^'])*'?|[^\s>]+(?=[\s>]|<\w))(?=[^>]*?>|<\w|\s*$)/gi, "$1").replace(/<iframe(?:\s[^>]+?)?>[\S\s]*?<\/iframe\s*>/gi, "");
             var htmldoc = parse(text, requestURL);
           } catch(e) {
             return error('HTML Parse Error');
@@ -252,35 +249,41 @@
             // remove entry
             $D(item_body);
             var df = document.createDocumentFragment();
-            entry.forEach(function(i){
-              df.appendChild(document.adoptNode(i, true));
-            });
-            item_body.appendChild(df);
-            message('Loading FullFeed ...Done');
-            addClass(container, 'chrome_fullfeed_loaded');
-            removeClass(container, 'chrome_fullfeed_loading');
-            addClass(container, requestURL);
-
-            // search AP data
-            if(aplist.length){
-              var nextLink;
-              aplist.some(function(i){
-                if((nextLink = $X(i.nextLink, htmldoc)[0]) && ($X(i.pageElement, htmldoc).length)){
-                  nextLink = nextLink.getAttribute('href') ||
-                            nextLink.getAttribute('action') ||
-                            nextLink.getAttribute('value');
-                  AP["autopager"+c.id] = {
-                    ap   : i,
-                    ff   : info,
-                    link : nextLink,
-                    enc  : c.enc,
-                    page : 1
-                  }
-                  return true;
+            var i = 0;
+            var len = entry.length;
+            var id = setTimeout(function callback() {
+              clearTimeout(id);
+              df.appendChild($CF(sanitize(entry[i++])));
+              if (i < len) {
+                id = setTimeout(callback, 0);
+              } else {
+                item_body.appendChild(df);
+                message('Loading FullFeed ...Done');
+                addClass(container, 'chrome_fullfeed_loaded');
+                removeClass(container, 'chrome_fullfeed_loading');
+                addClass(container, requestURL);
+                // search AP data
+                if(aplist.length){
+                  var nextLink;
+                  aplist.some(function(i){
+                    if((nextLink = $X(i.nextLink, htmldoc)[0]) && ($X(i.pageElement, htmldoc).length)){
+                      nextLink = nextLink.getAttribute('href') ||
+                                nextLink.getAttribute('action') ||
+                                nextLink.getAttribute('value');
+                      AP["autopager"+c.id] = {
+                        ap   : i,
+                        ff   : info,
+                        link : nextLink,
+                        enc  : c.enc,
+                        page : 1
+                      }
+                      return true;
+                    }
+                    return false;
+                  },this)
                 }
-                return false;
-              },this)
-            }
+              }
+            }, 0);
           } else {
             return error('This SITE_INFO is unmatched to this entry');
           }
@@ -532,4 +535,51 @@
       });
     });
   })();
+
+  // http://d.hatena.ne.jp/os0x/20080228/1204210085
+  // a little modified
+  function sanitize(node) {
+    if (node.nodeType !== 1 && node.nodeType !== 3) {
+      return;
+    }
+    var contents = Array.prototype.slice.call(node.childNodes).reduce(function(memo, node) {
+      var content = sanitize(node);
+      if (content) {
+        memo.push(content);
+      }
+      return memo;
+    }, []);
+    if (node.nodeType === 1) {
+      // white list
+      var tag = node.tagName;
+      var attr = (function attrCollector() {
+        var res = [''];
+        switch (tag.toUpperCase()) {
+          case 'H2':
+            tag = 'H3';
+            break;
+          case 'IMG':
+            if (/^(?:https?:\/\/|\.|\/)/.test(node.src)) {
+              res.push('src=' + JSON.stringify(node.src));
+            }
+            if (node.alt || node.title) {
+              res.push('alt=' + JSON.stringify(node.alt || node.title));
+            }
+            break;
+          case 'A':
+            if (/^(?:https?:\/\/|\.|\/)/.test(node.href)) {
+              res.push('href='+ JSON.stringify(node.href));
+            }
+            if (node.alt || node.title) {
+              res.push('alt=' + JSON.stringify(node.alt || node.title));
+            }
+            break;
+        };
+        return res.join(' ');
+      })();
+      return '<' + tag + attr + '>' + contents.join('') + '</' + tag + '>';
+    } else if (node.nodeType === 3) {
+      return node.nodeValue;
+    }
+  }
 })();

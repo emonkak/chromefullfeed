@@ -25,13 +25,14 @@ var SITEINFO_IMPORT_URLS = [
   format:'JSON',
   type:'LDRFullFeed',
   url: 'http://wedata.net/databases/LDRFullFeed/items.json',
+  alternative: 'http://utatane.heroku.com/databases/LDRFullFeed/items.json'
 },
 {
   name:'Wedata AutoPagerize',
   format:'JSON',
   type:'AutoPagerize',
   url: 'http://wedata.net/databases/AutoPagerize/items.json',
-  alternative: 'http://utatane.appjet.net/databases/AutoPagerize/items.json'
+  alternative: 'http://utatane.heroku.com/databases/AutoPagerize/items.json'
 },
 ];
 
