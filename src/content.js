@@ -118,7 +118,7 @@
     function load(res){
       var ap = item.ap;
       var ff = item.ff;
-      var item_body = $X('id("item_body_' + id + '")/div[@class="body"]', document)[0];
+      var item_body = $X('id("item_body_' + obj.id + '")/div[@class="body"]', document)[0];
       var text = res.responseText;
       try {
         var htmldoc = parse(text, item.link);
@@ -159,7 +159,7 @@
               nextLink = nextLink.getAttribute('href') ||
                         nextLink.getAttribute('action') ||
                         nextLink.getAttribute('value');
-              AP["autopager"+id] = {
+              AP["autopager"+obj.id] = {
                 ap   : ap,
                 ff   : ff,
                 link : nextLink,
