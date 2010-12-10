@@ -536,50 +536,58 @@
     });
   })();
 
-  // http://d.hatena.ne.jp/os0x/20080228/1204210085
-  // a little modified
-  function sanitize(node) {
-    if (node.nodeType !== 1 && node.nodeType !== 3) {
-      return;
-    }
-    var contents = Array.prototype.slice.call(node.childNodes).reduce(function(memo, node) {
-      var content = sanitize(node);
-      if (content) {
-        memo.push(content);
-      }
-      return memo;
-    }, []);
-    if (node.nodeType === 1) {
-      // white list
-      var tag = node.tagName;
-      var attr = (function attrCollector() {
-        var res = [''];
-        switch (tag.toUpperCase()) {
-          case 'H2':
-            tag = 'H3';
-            break;
-          case 'IMG':
-            if (/^(?:https?:\/\/|\.|\/)/.test(node.src)) {
-              res.push('src=' + JSON.stringify(node.src));
-            }
-            if (node.alt || node.title) {
-              res.push('alt=' + JSON.stringify(node.alt || node.title));
-            }
-            break;
-          case 'A':
-            if (/^(?:https?:\/\/|\.|\/)/.test(node.href)) {
-              res.push('href='+ JSON.stringify(node.href));
-            }
-            if (node.alt || node.title) {
-              res.push('alt=' + JSON.stringify(node.alt || node.title));
-            }
-            break;
-        };
-        return res.join(' ');
-      })();
-      return '<' + tag + attr + '>' + contents.join('') + '</' + tag + '>';
-    } else if (node.nodeType === 3) {
-      return node.nodeValue;
-    }
+
+// http://d.hatena.ne.jp/os0x/20080228/1204210085
+// a little modified
+function escapeHTML(str) {
+  return str.replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+}
+function sanitize(node) {
+  if (node.nodeType !== 1 && node.nodeType !== 3) {
+    return;
   }
+  var contents = Array.prototype.slice.call(node.childNodes).reduce(function(memo, node) {
+    var content = sanitize(node);
+    if (content) {
+      memo.push(content);
+    }
+    return memo;
+  }, []);
+  if (node.nodeType === 1) {
+    // white list
+    var tag = node.tagName;
+    var attr = (function attrCollector() {
+      var res = [''];
+      switch (tag.toUpperCase()) {
+        case 'H2':
+          tag = 'H3';
+          break;
+        case 'IMG':
+          if (/^(?:https?:\/\/|\.|\/)/.test(node.src)) {
+            res.push('src=' + JSON.stringify(node.src));
+          }
+          if (node.alt || node.title) {
+            res.push('alt=' + JSON.stringify(node.alt || node.title));
+          }
+          break;
+        case 'A':
+          if (/^(?:https?:\/\/|\.|\/)/.test(node.href)) {
+            res.push('href='+ JSON.stringify(node.href));
+          }
+          if (node.alt || node.title) {
+            res.push('alt=' + JSON.stringify(node.alt || node.title));
+          }
+          break;
+      };
+      return res.join(' ');
+    })();
+    tag = escapeHTML(tag);
+    return '<' + tag + ' ' + attr + '>' + contents.join('') + '</' + tag + '>';
+  } else if (node.nodeType === 3) {
+    return escapeHTML(node.nodeValue);
+  }
+}
 })();
