@@ -141,11 +141,11 @@
         var df = $CF('<hr/><p class="gm_fullfeed_pager">page <a class="gm_fullfeed_link" href="'+this.requestURL+'">'+(++page)+'</a></p>');
         var i = 0;
         var len = entry.length;
-        var id = setTimeout(function callback() {
-          clearTimeout(id);
+        var timer = setTimeout(function callback() {
+          clearTimeout(timer);
           df.appendChild($CF(sanitize(entry[i++])));
           if (i < len) {
-            id = setTimeout(callback, 0);
+            timer = setTimeout(callback, 0);
           } else {
             item_body.appendChild(df);
             message('Loading AutoPager ...Done');
