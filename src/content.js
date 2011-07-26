@@ -583,7 +583,9 @@ function sanitize(node) {
       return res.join(' ');
     })();
     tag = escapeHTML(tag);
-    return '<' + tag + ' ' + attr + '>' + contents.join('') + '</' + tag + '>';
+    return contents.length === 0
+         ? '<' + tag + ' ' + attr + '/>'
+         : '<' + tag + ' ' + attr + '>' + contents.join('') + '</' + tag + '>';
   } else if (node.nodeType === 3) {
     return escapeHTML(node.nodeValue);
   }
