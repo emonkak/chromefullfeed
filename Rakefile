@@ -4,7 +4,7 @@ require 'json'
 
 $name     = 'chromefullfeed'
 $manifest = "src/manifest.json"
-$pem      = File.expand_path "~/dev/private/chromefullfeed.pem"
+$pem      = File.expand_path "chromefullfeed.pem"
 $manifest_data = File.open($manifest, 'rb'){|f| JSON.parse(f.read) }
 $version = $manifest_data["version"]
 
