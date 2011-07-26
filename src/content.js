@@ -559,6 +559,9 @@ function sanitize(node) {
     var tag = node.tagName;
     var attr = (function attrCollector() {
       var res = [''];
+      if (node.style.length > 0) {
+        res.push('style=' + JSON.stringify(node.style.cssText));
+      }
       switch (tag.toUpperCase()) {
         case 'H2':
           tag = 'H3';
@@ -577,6 +580,58 @@ function sanitize(node) {
           }
           if (node.alt || node.title) {
             res.push('alt=' + JSON.stringify(node.alt || node.title));
+          }
+          break;
+        case 'EMBED':
+          if (node.src) {
+            res.push('src=' + JSON.stringify(node.src));
+          }
+          if (node.type) {
+            res.push('type=' + JSON.stringify(node.type));
+          }
+          if (node.width) {
+            res.push('width=' + JSON.stringify(node.width));
+          }
+          if (node.height) {
+            res.push('height=' + JSON.stringify(node.height));
+          }
+          break;
+        case 'FONT':
+          if (node.color) {
+            res.push('color=' + JSON.stringify(node.color));
+          }
+          if (node.size) {
+            res.push('size=' + JSON.stringify(node.size));
+          }
+          break;
+        case 'IFRAME':
+          if (/^(?:https?:\/\/|\.|\/)/.test(node.src)) {
+            res.push('src=' + JSON.stringify(node.src));
+          }
+          if (node.width) {
+            res.push('width=' + JSON.stringify(node.width));
+          }
+          if (node.height) {
+            res.push('height=' + JSON.stringify(node.height));
+          }
+          if (node.scrolling) {
+            res.push('scrolling=' + JSON.stringify(node.scrolling));
+          }
+          break;
+        case 'OBJECT':
+          if (node.width) {
+            res.push('width=' + JSON.stringify(node.width));
+          }
+          if (node.height) {
+            res.push('height=' + JSON.stringify(node.height));
+          }
+          break;
+        case 'PARAM':
+          if (node.name && node.name === 'movie') {
+            res.push('name=' + JSON.stringify(node.name));
+          }
+          if (node.value) {
+            res.push('value=' + JSON.stringify(node.value));
           }
           break;
       };
