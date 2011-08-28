@@ -617,6 +617,7 @@ function sanitize(node) {
           if (node.scrolling) {
             res.push('scrolling=' + JSON.stringify(node.scrolling));
           }
+          res.push('sandbox');
           break;
         case 'OBJECT':
           if (node.width) {
